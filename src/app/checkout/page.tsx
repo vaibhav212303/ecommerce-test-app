@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
 import { ChevronRight, ChevronLeft, CheckCircle2, CreditCard, Truck, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getConversionRate } from "@/lib/currencyRate";
 
 type Step = "shipping" | "payment" | "summary";
 
@@ -312,8 +313,64 @@ export default function CheckoutPage() {
                 <span>${totalPrice.toFixed(2)}</span>
               </div>
             </div>
+
+            {/* Dynamic Currency Conversion */}
+            <CurrencyConversion totalPrice={totalPrice} />
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Currency Conversion Component ---
+function CurrencyConversion({ totalPrice }: { totalPrice: number }) {
+  const [target, setTarget] = useState("EUR"); // Default target currency
+  const [converted, setConverted] = useState<number|null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string|null>(null);
+
+  useEffect(() => {
+    let ignore = false;
+    async function fetchRate() {
+      setLoading(true);
+      setError(null);
+      try {
+        const rate = await getConversionRate('USD', target);
+        if (!ignore) setConverted(rate * totalPrice);
+      } catch (e:any) {
+        setError("Failed to fetch currency rate");
+        setConverted(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (target !== 'USD') fetchRate();
+    else setConverted(totalPrice);
+    return () => { ignore = true };
+  }, [target, totalPrice]);
+
+  return (
+    <div className="mt-6">
+      <label className="block mb-1 text-xs text-gray-600">Show total in:</label>
+      <select
+        value={target} onChange={e => setTarget(e.target.value)}
+        className="border rounded px-2 py-1 text-xs"
+      >
+        {/* Add other desired currencies */}
+        <option value="EUR">EUR</option>
+        <option value="USD">USD</option>
+        <option value="GBP">GBP</option>
+        <option value="JPY">JPY</option>
+      </select>
+      <div className="mt-2 text-sm">
+        {loading && <span>Fetching rate...</span>}
+        {!loading && error && <span className="text-red-600">{error}</span>}
+        {!loading && converted !== null && !error && (
+          <span>
+            Total: <span className="font-bold">{converted.toLocaleString(undefined, {style:'currency',currency:target})}</span>
+          </span>
+        )}
       </div>
     </div>
   );

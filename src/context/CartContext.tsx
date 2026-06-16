@@ -16,24 +16,26 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(() => {
-    if (typeof window !== "undefined") {
-      const savedCart = localStorage.getItem("cart");
-      if (savedCart) {
-        try {
-          return JSON.parse(savedCart);
-        } catch (e) {
-          console.error("Failed to parse cart from localStorage", e);
-        }
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [hasHydrated, setHasHydrated] = useState(false);
+
+  useEffect(() => {
+    // Only run on client
+    const savedCart = localStorage.getItem("cart");
+    if (savedCart) {
+      try {
+        setItems(JSON.parse(savedCart));
+      } catch (e) {
+        console.error("Failed to parse cart from localStorage", e);
       }
     }
-    return [];
-  });
+    setHasHydrated(true);
+  }, []);
 
   // Save cart to localStorage on change
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(items));
-  }, [items]);
+    if (hasHydrated) localStorage.setItem("cart", JSON.stringify(items));
+  }, [items, hasHydrated]);
 
   const addItem = (product: Product) => {
     setItems((prevItems) => {
@@ -75,6 +77,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     0
   );
 
+  if (!hasHydrated) return null;
   return (
     <CartContext.Provider
       value={{
