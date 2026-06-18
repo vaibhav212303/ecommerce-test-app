@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { ProductList } from "@/components/ProductList";
 
 export default function Home() {
@@ -11,7 +12,9 @@ export default function Home() {
           Discover our latest arrivals and timeless classics.
         </p>
       </div>
-      <ProductList />
+      <Suspense fallback={<div className="text-center text-gray-500">Loading products...</div>}>
+        <ProductList />
+      </Suspense>
     </div>
   );
 }

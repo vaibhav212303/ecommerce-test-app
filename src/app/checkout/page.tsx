@@ -14,16 +14,13 @@ import {
 import { cn } from "@/lib/utils";
 import { getConversionRate } from "@/lib/currencyRate";
 import { calculateGoldCustomerDiscount } from "@/lib/discounts";
+import { useCustomer } from "@/context/CustomerContext";
 
 type Step = "shipping" | "payment" | "summary";
 
-const currentCustomer = {
-  tier: "gold",
-  successfulOrdersLast90Days: 3,
-};
-
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
+  const { customer } = useCustomer();
   const router = useRouter();
   const [step, setStep] = useState<Step>("shipping");
   const [formData, setFormData] = useState({
@@ -82,10 +79,9 @@ export default function CheckoutPage() {
     { id: "summary", title: "Summary", icon: Receipt },
   ];
 
-  const goldCustomerDiscount = calculateGoldCustomerDiscount(
-    totalPrice,
-    currentCustomer,
-  );
+  const goldCustomerDiscount = customer
+    ? calculateGoldCustomerDiscount(totalPrice, customer)
+    : 0;
   const payableTotal = totalPrice - goldCustomerDiscount;
 
   return (
@@ -345,6 +341,18 @@ export default function CheckoutPage() {
 
         <div className="rounded-lg bg-white p-6 shadow-sm h-fit">
           <h2 className="mb-4 font-semibold text-gray-900">Your Order</h2>
+          <div className="mb-4 rounded-md bg-gray-50 p-3 text-sm text-gray-700">
+            {customer ? (
+              <>
+                Ordering as <span className="font-semibold">{customer.name}</span>
+                <span className="ml-1 capitalize">({customer.type} customer)</span>
+              </>
+            ) : (
+              <>
+                Checking out as guest. <button onClick={() => router.push("/login")} className="font-medium text-blue-600 hover:underline">Login</button> to use a demo customer type.
+              </>
+            )}
+          </div>
           <div className="space-y-4">
             {items.map((item) => (
               <div key={item.id} className="flex justify-between text-sm">
@@ -364,10 +372,18 @@ export default function CheckoutPage() {
                   <span>Gold customer discount</span>
                   <span>-${goldCustomerDiscount.toFixed(2)}</span>
                 </div>
-              ) : (
+              ) : customer?.type === "gold" ? (
                 <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-700">
-                  Gold customers get 10% off on orders of $500 + after 3
+                  Gold customers get 10% off on orders of $500+ after 3
                   successful orders in the last 90 days.
+                </p>
+              ) : customer?.type === "admin" ? (
+                <p className="rounded-md bg-blue-50 p-2 text-xs text-blue-700">
+                  Admin accounts can place demo orders but do not receive customer discounts.
+                </p>
+              ) : (
+                <p className="rounded-md bg-gray-50 p-2 text-xs text-gray-600">
+                  Login as a Gold customer to unlock eligible order discounts.
                 </p>
               )}
               <div className="flex justify-between font-bold text-gray-900">

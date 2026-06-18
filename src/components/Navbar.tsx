@@ -4,7 +4,9 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { categories } from "@/data/products";
 import { CartSidebar } from "./CartSidebar";
+import { ProfileMenu } from "./ProfileMenu";
 
 export function Navbar() {
   const { totalItems } = useCart();
@@ -13,16 +15,34 @@ export function Navbar() {
   return (
     <>
       <nav className="sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center">
+        <div className="mx-auto flex min-h-16 max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center gap-4">
             <Link href="/" className="text-2xl font-bold">
               <span className="text-teal-500">TESTR</span>
               <span className="italic text-black mr-0.5">i</span>
               <span className="text-teal-500">G</span>-E-SHOP
             </Link>
+            <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto whitespace-nowrap" aria-label="Product categories">
+              <Link
+                href="/"
+                className="rounded-full px-2.5 py-1 text-sm font-medium text-gray-600 transition hover:bg-teal-50 hover:text-teal-700"
+              >
+                All
+              </Link>
+              {categories.map((category) => (
+                <Link
+                  key={category}
+                  href={`/?category=${encodeURIComponent(category)}`}
+                  className="rounded-full px-2.5 py-1 text-sm font-medium text-gray-600 transition hover:bg-teal-50 hover:text-teal-700"
+                >
+                  {category}
+                </Link>
+              ))}
+            </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <ProfileMenu />
             <button
               onClick={() => setIsCartOpen(true)}
               aria-label="Open shopping cart"
