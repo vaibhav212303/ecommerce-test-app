@@ -3,11 +3,24 @@
 import React, { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
-import { ChevronRight, ChevronLeft, CheckCircle2, CreditCard, Truck, Receipt } from "lucide-react";
+import {
+  ChevronRight,
+  ChevronLeft,
+  CheckCircle2,
+  CreditCard,
+  Truck,
+  Receipt,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getConversionRate } from "@/lib/currencyRate";
+import { calculateGoldCustomerDiscount } from "@/lib/discounts";
 
 type Step = "shipping" | "payment" | "summary";
+
+const currentCustomer = {
+  tier: "gold",
+  successfulOrdersLast90Days: 3,
+};
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
@@ -69,6 +82,12 @@ export default function CheckoutPage() {
     { id: "summary", title: "Summary", icon: Receipt },
   ];
 
+  const goldCustomerDiscount = calculateGoldCustomerDiscount(
+    totalPrice,
+    currentCustomer,
+  );
+  const payableTotal = totalPrice - goldCustomerDiscount;
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="mb-8">
@@ -83,8 +102,8 @@ export default function CheckoutPage() {
                     step === s.id
                       ? "border-blue-600 bg-blue-50 text-blue-600"
                       : steps.findIndex((x) => x.id === step) > idx
-                      ? "border-green-600 bg-green-50 text-green-600"
-                      : "border-gray-300 text-gray-400"
+                        ? "border-green-600 bg-green-50 text-green-600"
+                        : "border-gray-300 text-gray-400",
                   )}
                 >
                   {steps.findIndex((x) => x.id === step) > idx ? (
@@ -96,7 +115,7 @@ export default function CheckoutPage() {
                 <span
                   className={cn(
                     "mt-2 text-xs font-medium",
-                    step === s.id ? "text-blue-600" : "text-gray-500"
+                    step === s.id ? "text-blue-600" : "text-gray-500",
                   )}
                 >
                   {s.title}
@@ -108,7 +127,7 @@ export default function CheckoutPage() {
                     "mb-6 h-0.5 w-16 sm:w-24",
                     steps.findIndex((x) => x.id === step) > idx
                       ? "bg-green-600"
-                      : "bg-gray-300"
+                      : "bg-gray-300",
                   )}
                 />
               )}
@@ -120,11 +139,16 @@ export default function CheckoutPage() {
       <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
         <div className="lg:col-span-2">
           {step === "shipping" && (
-            <form onSubmit={handleNext} className="space-y-6 rounded-lg bg-white p-6 shadow-sm">
+            <form
+              onSubmit={handleNext}
+              className="space-y-6 rounded-lg bg-white p-6 shadow-sm"
+            >
               <h2 className="text-xl font-semibold">Shipping Information</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
                   <input
                     required
                     type="email"
@@ -135,7 +159,9 @@ export default function CheckoutPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">First Name</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    First Name
+                  </label>
                   <input
                     required
                     type="text"
@@ -146,7 +172,9 @@ export default function CheckoutPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Last Name</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Last Name
+                  </label>
                   <input
                     required
                     type="text"
@@ -157,7 +185,9 @@ export default function CheckoutPage() {
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">Address</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Address
+                  </label>
                   <input
                     required
                     type="text"
@@ -168,7 +198,9 @@ export default function CheckoutPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">City</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    City
+                  </label>
                   <input
                     required
                     type="text"
@@ -179,7 +211,9 @@ export default function CheckoutPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Zip Code</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Zip Code
+                  </label>
                   <input
                     required
                     type="text"
@@ -200,11 +234,16 @@ export default function CheckoutPage() {
           )}
 
           {step === "payment" && (
-            <form onSubmit={handleNext} className="space-y-6 rounded-lg bg-white p-6 shadow-sm">
+            <form
+              onSubmit={handleNext}
+              className="space-y-6 rounded-lg bg-white p-6 shadow-sm"
+            >
               <h2 className="text-xl font-semibold">Payment Details</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Card Number</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Card Number
+                  </label>
                   <input
                     required
                     type="text"
@@ -217,7 +256,9 @@ export default function CheckoutPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Expiry Date</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Expiry Date
+                    </label>
                     <input
                       required
                       type="text"
@@ -229,7 +270,9 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">CVV</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      CVV
+                    </label>
                     <input
                       required
                       type="text"
@@ -267,8 +310,10 @@ export default function CheckoutPage() {
                 <div className="border-b pb-4">
                   <h3 className="font-medium">Shipping Address</h3>
                   <p className="mt-1 text-sm text-gray-600">
-                    {formData.firstName} {formData.lastName}<br />
-                    {formData.address}<br />
+                    {formData.firstName} {formData.lastName}
+                    <br />
+                    {formData.address}
+                    <br />
                     {formData.city}, {formData.zipCode}
                   </p>
                 </div>
@@ -303,19 +348,36 @@ export default function CheckoutPage() {
           <div className="space-y-4">
             {items.map((item) => (
               <div key={item.id} className="flex justify-between text-sm">
-                <span>{item.name} x {item.quantity}</span>
+                <span>
+                  {item.name} x {item.quantity}
+                </span>
                 <span>${(item.price * item.quantity).toFixed(2)}</span>
               </div>
             ))}
-            <div className="border-t pt-4">
+            <div className="border-t pt-4 space-y-2">
+              <div className="flex justify-between text-gray-700">
+                <span>Subtotal</span>
+                <span>${totalPrice.toFixed(2)}</span>
+              </div>
+              {goldCustomerDiscount > 0 ? (
+                <div className="flex justify-between text-green-700">
+                  <span>Gold customer discount</span>
+                  <span>-${goldCustomerDiscount.toFixed(2)}</span>
+                </div>
+              ) : (
+                <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-700">
+                  Gold customers get 10% off on orders of $500 + after 3
+                  successful orders in the last 90 days.
+                </p>
+              )}
               <div className="flex justify-between font-bold text-gray-900">
                 <span>Total</span>
-                <span>${totalPrice.toFixed(2)}</span>
+                <span>${payableTotal.toFixed(2)}</span>
               </div>
             </div>
 
             {/* Dynamic Currency Conversion */}
-            <CurrencyConversion totalPrice={totalPrice} />
+            <CurrencyConversion totalPrice={payableTotal} />
           </div>
         </div>
       </div>
@@ -326,9 +388,9 @@ export default function CheckoutPage() {
 // --- Currency Conversion Component ---
 function CurrencyConversion({ totalPrice }: { totalPrice: number }) {
   const [target, setTarget] = useState("EUR"); // Default target currency
-  const [converted, setConverted] = useState<number|null>(null);
+  const [converted, setConverted] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string|null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -336,25 +398,28 @@ function CurrencyConversion({ totalPrice }: { totalPrice: number }) {
       setLoading(true);
       setError(null);
       try {
-        const rate = await getConversionRate('USD', target);
+        const rate = await getConversionRate("USD", target);
         if (!ignore) setConverted(rate * totalPrice);
-      } catch (e:any) {
+      } catch (e: any) {
         setError("Failed to fetch currency rate");
         setConverted(null);
       } finally {
         setLoading(false);
       }
     }
-    if (target !== 'USD') fetchRate();
+    if (target !== "USD") fetchRate();
     else setConverted(totalPrice);
-    return () => { ignore = true };
+    return () => {
+      ignore = true;
+    };
   }, [target, totalPrice]);
 
   return (
     <div className="mt-6">
       <label className="block mb-1 text-xs text-gray-600">Show total in:</label>
       <select
-        value={target} onChange={e => setTarget(e.target.value)}
+        value={target}
+        onChange={(e) => setTarget(e.target.value)}
         className="border rounded px-2 py-1 text-xs"
       >
         {/* Add other desired currencies */}
@@ -368,7 +433,13 @@ function CurrencyConversion({ totalPrice }: { totalPrice: number }) {
         {!loading && error && <span className="text-red-600">{error}</span>}
         {!loading && converted !== null && !error && (
           <span>
-            Total: <span className="font-bold">{converted.toLocaleString(undefined, {style:'currency',currency:target})}</span>
+            Total:{" "}
+            <span className="font-bold">
+              {converted.toLocaleString(undefined, {
+                style: "currency",
+                currency: target,
+              })}
+            </span>
           </span>
         )}
       </div>
