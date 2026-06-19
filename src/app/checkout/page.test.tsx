@@ -71,9 +71,14 @@ describe("Checkout pricing rules", () => {
     await user.type(screen.getByPlaceholderText("SAVE50"), "SAVE50");
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
-    expect(screen.getByText("SAVE50 applied successfully.")).toBeInTheDocument();
+    expect(
+      screen.getByText("SAVE50 applied successfully."),
+    ).toBeInTheDocument();
     expect(screen.getByText("Coupon SAVE50")).toBeInTheDocument();
     expect(screen.getByText("-$50.00")).toBeInTheDocument();
+    expect(screen.getByText("Estimated tax")).toBeInTheDocument();
+    expect(screen.getByText("$12.00")).toBeInTheDocument();
+    expect(screen.getByText("$212.00")).toBeInTheDocument();
   });
 
   it("does not allow SAVE50 to be applied more than once per user", async () => {
@@ -84,7 +89,9 @@ describe("Checkout pricing rules", () => {
     await user.type(screen.getByPlaceholderText("SAVE50"), "SAVE50");
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
-    expect(screen.getByText("SAVE50 has already been used for this user.")).toBeInTheDocument();
+    expect(
+      screen.getByText("SAVE50 has already been used for this user."),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Coupon SAVE50")).not.toBeInTheDocument();
   });
 
@@ -97,7 +104,9 @@ describe("Checkout pricing rules", () => {
     await user.type(screen.getByPlaceholderText("SAVE50"), "SAVE50");
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
-    expect(screen.getByText("Coupon and customer discount cannot be combined.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Coupon and customer discount cannot be combined."),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Coupon SAVE50")).not.toBeInTheDocument();
   });
 
@@ -107,8 +116,14 @@ describe("Checkout pricing rules", () => {
     const shippingRow = screen.getAllByText("Shipping").at(-1)?.closest("div");
 
     expect(shippingRow).toBeDefined();
-    expect(within(shippingRow as HTMLElement).getByText("$50.00")).toBeInTheDocument();
-    expect(screen.getByText("$50 shipping applies below $1,000.")).toBeInTheDocument();
+    expect(
+      within(shippingRow as HTMLElement).getByText("$50.00"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("$50 shipping applies below $1,000."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("$79.92")).toBeInTheDocument();
+    expect(screen.getByText("$1128.92")).toBeInTheDocument();
   });
 
   it("applies free shipping for orders of $1,000 or more", async () => {
@@ -117,7 +132,13 @@ describe("Checkout pricing rules", () => {
     const shippingRow = screen.getAllByText("Shipping").at(-1)?.closest("div");
 
     expect(shippingRow).toBeDefined();
-    expect(within(shippingRow as HTMLElement).getByText("Free")).toBeInTheDocument();
-    expect(screen.getByText("Free shipping applied for orders of $1,000 or more.")).toBeInTheDocument();
+    expect(
+      within(shippingRow as HTMLElement).getByText("Free"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Free shipping applied for orders of $1,000 or more."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("$80.00")).toBeInTheDocument();
+    expect(screen.getByText("$1080.00")).toBeInTheDocument();
   });
 });

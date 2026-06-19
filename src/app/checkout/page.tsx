@@ -14,18 +14,14 @@ import {
 import { cn } from "@/lib/utils";
 import { getConversionRate } from "@/lib/currencyRate";
 import { calculateGoldCustomerDiscount } from "@/lib/discounts";
+import {
+  SAVE50_COUPON_CODE,
+  calculateCheckoutPricing,
+  getCouponUsageKey,
+} from "@/lib/checkoutPricing";
 import { useCustomer } from "@/context/CustomerContext";
 
 type Step = "shipping" | "payment" | "summary";
-
-const SAVE50_COUPON_CODE = "SAVE50";
-const SAVE50_COUPON_DISCOUNT = 50;
-const FREE_SHIPPING_MINIMUM = 1000;
-const STANDARD_SHIPPING_FEE = 50;
-
-function getCouponUsageKey(userIdentifier: string) {
-  return `coupon:${SAVE50_COUPON_CODE}:${userIdentifier.toLowerCase()}`;
-}
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
@@ -50,9 +46,14 @@ export default function CheckoutPage() {
   const goldCustomerDiscount = customer
     ? calculateGoldCustomerDiscount(totalPrice, customer)
     : 0;
-  const couponDiscount = couponApplied ? Math.min(SAVE50_COUPON_DISCOUNT, totalPrice) : 0;
-  const shippingFee = totalPrice >= FREE_SHIPPING_MINIMUM ? 0 : STANDARD_SHIPPING_FEE;
-  const payableTotal = totalPrice - goldCustomerDiscount - couponDiscount + shippingFee;
+  const pricing = calculateCheckoutPricing({
+    subtotal: totalPrice,
+    discountAmount: goldCustomerDiscount,
+    couponApplied,
+  });
+  const couponDiscount = pricing.couponDiscount;
+  const shippingFee = pricing.shippingFee;
+  const payableTotal = pricing.total;
 
   if (items.length === 0 && step !== "summary") {
     return (
@@ -79,7 +80,8 @@ export default function CheckoutPage() {
 
   const handleApplyCoupon = () => {
     const normalizedCode = couponCode.trim().toUpperCase();
-    const userIdentifier = customer?.email ?? formData.email.trim().toLowerCase();
+    const userIdentifier =
+      customer?.email ?? formData.email.trim().toLowerCase();
 
     if (normalizedCode !== SAVE50_COUPON_CODE) {
       setCouponApplied(false);
@@ -125,7 +127,8 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = () => {
-    const userIdentifier = customer?.email ?? formData.email.trim().toLowerCase();
+    const userIdentifier =
+      customer?.email ?? formData.email.trim().toLowerCase();
 
     // Simulate API call
     setTimeout(() => {
@@ -403,12 +406,22 @@ export default function CheckoutPage() {
           <div className="mb-4 rounded-md bg-gray-50 p-3 text-sm text-gray-700">
             {customer ? (
               <>
-                Ordering as <span className="font-semibold">{customer.name}</span>
-                <span className="ml-1 capitalize">({customer.type} customer)</span>
+                Ordering as{" "}
+                <span className="font-semibold">{customer.name}</span>
+                <span className="ml-1 capitalize">
+                  ({customer.type} customer)
+                </span>
               </>
             ) : (
               <>
-                Checking out as guest. <button onClick={() => router.push("/login")} className="font-medium text-blue-600 hover:underline">Login</button> to use a demo customer type.
+                Checking out as guest.{" "}
+                <button
+                  onClick={() => router.push("/login")}
+                  className="font-medium text-blue-600 hover:underline"
+                >
+                  Login
+                </button>{" "}
+                to use a demo customer type.
               </>
             )}
           </div>
@@ -458,7 +471,12 @@ export default function CheckoutPage() {
                   )}
                 </div>
                 {couponMessage && (
-                  <p className={cn("mt-2 text-xs", couponApplied ? "text-green-700" : "text-red-600")}>
+                  <p
+                    className={cn(
+                      "mt-2 text-xs",
+                      couponApplied ? "text-green-700" : "text-red-600",
+                    )}
+                  >
                     {couponMessage}
                   </p>
                 )}
@@ -475,7 +493,8 @@ export default function CheckoutPage() {
                 </p>
               ) : customer?.type === "admin" ? (
                 <p className="rounded-md bg-blue-50 p-2 text-xs text-blue-700">
-                  Admin accounts can place demo orders but do not receive customer discounts.
+                  Admin accounts can place demo orders but do not receive
+                  customer discounts.
                 </p>
               ) : (
                 <p className="rounded-md bg-gray-50 p-2 text-xs text-gray-600">
@@ -488,9 +507,20 @@ export default function CheckoutPage() {
                   <span>-${couponDiscount.toFixed(2)}</span>
                 </div>
               )}
+              <div className="rounded-md bg-slate-50 p-3 space-y-2">
+                <div className="flex justify-between text-gray-700">
+                  <span>Estimated tax </span>
+                  <span>${pricing.taxAmount.toFixed(2)}</span>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Tax is calculated after discounts and before shipping.
+                </p>
+              </div>
               <div className="flex justify-between text-gray-700">
                 <span>Shipping</span>
-                <span>{shippingFee === 0 ? "Free" : `$${shippingFee.toFixed(2)}`}</span>
+                <span>
+                  {shippingFee === 0 ? "Free" : `$${shippingFee.toFixed(2)}`}
+                </span>
               </div>
               {shippingFee === 0 ? (
                 <p className="rounded-md bg-green-50 p-2 text-xs text-green-700">
@@ -501,7 +531,7 @@ export default function CheckoutPage() {
                   $50 shipping applies below $1,000.
                 </p>
               )}
-              <div className="flex justify-between font-bold text-gray-900">
+              <div className="flex justify-between border-t pt-3 text-lg font-bold text-gray-900">
                 <span>Total</span>
                 <span>${payableTotal.toFixed(2)}</span>
               </div>
