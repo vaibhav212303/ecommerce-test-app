@@ -403,28 +403,6 @@ export default function CheckoutPage() {
 
         <div className="rounded-lg bg-white p-6 shadow-sm h-fit">
           <h2 className="mb-4 font-semibold text-gray-900">Your Order</h2>
-          <div className="mb-4 rounded-md bg-gray-50 p-3 text-sm text-gray-700">
-            {customer ? (
-              <>
-                Ordering as{" "}
-                <span className="font-semibold">{customer.name}</span>
-                <span className="ml-1 capitalize">
-                  ({customer.type} customer)
-                </span>
-              </>
-            ) : (
-              <>
-                Checking out as guest.{" "}
-                <button
-                  onClick={() => router.push("/login")}
-                  className="font-medium text-blue-600 hover:underline"
-                >
-                  Login
-                </button>{" "}
-                to use a demo customer type.
-              </>
-            )}
-          </div>
           <div className="space-y-4">
             {items.map((item) => (
               <div key={item.id} className="flex justify-between text-sm">
@@ -496,11 +474,7 @@ export default function CheckoutPage() {
                   Admin accounts can place demo orders but do not receive
                   customer discounts.
                 </p>
-              ) : (
-                <p className="rounded-md bg-gray-50 p-2 text-xs text-gray-600">
-                  Login as a Gold customer to unlock eligible order discounts.
-                </p>
-              )}
+              ) : null}
               {couponDiscount > 0 && (
                 <div className="flex justify-between text-green-700">
                   <span>Coupon SAVE50</span>
@@ -528,7 +502,7 @@ export default function CheckoutPage() {
                 </p>
               ) : (
                 <p className="rounded-md bg-gray-50 p-2 text-xs text-gray-600">
-                  $50 shipping applies below $1,000.
+                  Free shipping above $1,000.
                 </p>
               )}
               <div className="flex justify-between border-t pt-3 text-lg font-bold text-gray-900">
