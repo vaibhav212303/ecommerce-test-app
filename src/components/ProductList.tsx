@@ -50,13 +50,6 @@ export function ProductList() {
   return (
     <div className="space-y-8">
       <div className="mx-auto max-w-xl">
-        {
-          selectedCategory
-          // <p className="mb-4 text-center text-sm font-medium text-teal-700">
-          //   Showing {selectedCategory} products
-          // </p>
-          // )
-        }
         <label htmlFor="product-search" className="sr-only">
           Search products
         </label>
