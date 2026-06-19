@@ -18,6 +18,15 @@ import { useCustomer } from "@/context/CustomerContext";
 
 type Step = "shipping" | "payment" | "summary";
 
+const SAVE50_COUPON_CODE = "SAVE50";
+const SAVE50_COUPON_DISCOUNT = 50;
+const FREE_SHIPPING_MINIMUM = 1000;
+const STANDARD_SHIPPING_FEE = 50;
+
+function getCouponUsageKey(userIdentifier: string) {
+  return `coupon:${SAVE50_COUPON_CODE}:${userIdentifier.toLowerCase()}`;
+}
+
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
   const { customer } = useCustomer();
@@ -34,6 +43,16 @@ export default function CheckoutPage() {
     expiry: "",
     cvv: "",
   });
+  const [couponCode, setCouponCode] = useState("");
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [couponMessage, setCouponMessage] = useState<string | null>(null);
+
+  const goldCustomerDiscount = customer
+    ? calculateGoldCustomerDiscount(totalPrice, customer)
+    : 0;
+  const couponDiscount = couponApplied ? Math.min(SAVE50_COUPON_DISCOUNT, totalPrice) : 0;
+  const shippingFee = totalPrice >= FREE_SHIPPING_MINIMUM ? 0 : STANDARD_SHIPPING_FEE;
+  const payableTotal = totalPrice - goldCustomerDiscount - couponDiscount + shippingFee;
 
   if (items.length === 0 && step !== "summary") {
     return (
@@ -52,6 +71,46 @@ export default function CheckoutPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "email" && couponApplied && !customer) {
+      setCouponApplied(false);
+      setCouponMessage("Coupon removed because checkout email changed.");
+    }
+  };
+
+  const handleApplyCoupon = () => {
+    const normalizedCode = couponCode.trim().toUpperCase();
+    const userIdentifier = customer?.email ?? formData.email.trim().toLowerCase();
+
+    if (normalizedCode !== SAVE50_COUPON_CODE) {
+      setCouponApplied(false);
+      setCouponMessage("Invalid coupon code.");
+      return;
+    }
+
+    if (goldCustomerDiscount > 0) {
+      setCouponApplied(false);
+      setCouponMessage("Coupon and customer discount cannot be combined.");
+      return;
+    }
+
+    if (!userIdentifier) {
+      setCouponMessage("Enter your email before applying this coupon.");
+      return;
+    }
+
+    if (localStorage.getItem(getCouponUsageKey(userIdentifier)) === "used") {
+      setCouponApplied(false);
+      setCouponMessage("SAVE50 has already been used for this user.");
+      return;
+    }
+
+    setCouponApplied(true);
+    setCouponMessage("SAVE50 applied successfully.");
+  };
+
+  const handleRemoveCoupon = () => {
+    setCouponApplied(false);
+    setCouponMessage(null);
   };
 
   const handleNext = (e: React.FormEvent) => {
@@ -66,8 +125,13 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = () => {
+    const userIdentifier = customer?.email ?? formData.email.trim().toLowerCase();
+
     // Simulate API call
     setTimeout(() => {
+      if (couponApplied && userIdentifier) {
+        localStorage.setItem(getCouponUsageKey(userIdentifier), "used");
+      }
       clearCart();
       router.push("/checkout/success");
     }, 1000);
@@ -78,11 +142,6 @@ export default function CheckoutPage() {
     { id: "payment", title: "Payment", icon: CreditCard },
     { id: "summary", title: "Summary", icon: Receipt },
   ];
-
-  const goldCustomerDiscount = customer
-    ? calculateGoldCustomerDiscount(totalPrice, customer)
-    : 0;
-  const payableTotal = totalPrice - goldCustomerDiscount;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
@@ -367,6 +426,43 @@ export default function CheckoutPage() {
                 <span>Subtotal</span>
                 <span>${totalPrice.toFixed(2)}</span>
               </div>
+              <div className="rounded-md border border-gray-200 p-3">
+                <label className="block text-xs font-medium text-gray-600">
+                  Coupon code
+                </label>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(event) => setCouponCode(event.target.value)}
+                    placeholder="SAVE50"
+                    disabled={couponApplied}
+                    className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm uppercase shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-100"
+                  />
+                  {couponApplied ? (
+                    <button
+                      type="button"
+                      onClick={handleRemoveCoupon}
+                      className="rounded-md border px-3 py-2 text-sm hover:bg-gray-50"
+                    >
+                      Remove
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      className="rounded-md bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
+                    >
+                      Apply
+                    </button>
+                  )}
+                </div>
+                {couponMessage && (
+                  <p className={cn("mt-2 text-xs", couponApplied ? "text-green-700" : "text-red-600")}>
+                    {couponMessage}
+                  </p>
+                )}
+              </div>
               {goldCustomerDiscount > 0 ? (
                 <div className="flex justify-between text-green-700">
                   <span>Gold customer discount</span>
@@ -384,6 +480,25 @@ export default function CheckoutPage() {
               ) : (
                 <p className="rounded-md bg-gray-50 p-2 text-xs text-gray-600">
                   Login as a Gold customer to unlock eligible order discounts.
+                </p>
+              )}
+              {couponDiscount > 0 && (
+                <div className="flex justify-between text-green-700">
+                  <span>Coupon SAVE50</span>
+                  <span>-${couponDiscount.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-gray-700">
+                <span>Shipping</span>
+                <span>{shippingFee === 0 ? "Free" : `$${shippingFee.toFixed(2)}`}</span>
+              </div>
+              {shippingFee === 0 ? (
+                <p className="rounded-md bg-green-50 p-2 text-xs text-green-700">
+                  Free shipping applied for orders of $1,000 or more.
+                </p>
+              ) : (
+                <p className="rounded-md bg-gray-50 p-2 text-xs text-gray-600">
+                  $50 shipping applies below $1,000.
                 </p>
               )}
               <div className="flex justify-between font-bold text-gray-900">
