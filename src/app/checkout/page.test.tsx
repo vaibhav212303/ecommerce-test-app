@@ -1,6 +1,6 @@
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CheckoutPage from "./page";
 import { CartProvider } from "@/context/CartContext";
@@ -68,12 +68,20 @@ describe("Checkout pricing rules", () => {
     const user = userEvent.setup();
     await renderCheckout({ totalPrice: 200, customerType: "normal" });
 
+    // First, enter email
+    const emailInput = document.querySelector('input[type="email"]') as HTMLInputElement;
+    await user.type(emailInput, "normal.customer@example.com");
+    
+    // Then apply coupon
     await user.type(screen.getByPlaceholderText("SAVE50"), "SAVE50");
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
-    expect(
-      screen.getByText("SAVE50 applied successfully."),
-    ).toBeInTheDocument();
+    // Wait for the success message to appear
+    await waitFor(() => {
+      expect(
+        screen.getByText("SAVE50 applied successfully."),
+      ).toBeInTheDocument();
+    });
     expect(screen.getByText("Coupon SAVE50")).toBeInTheDocument();
     expect(screen.getByText("-$50.00")).toBeInTheDocument();
     expect(screen.getByText("Estimated tax")).toBeInTheDocument();
@@ -86,12 +94,20 @@ describe("Checkout pricing rules", () => {
     localStorage.setItem("coupon:SAVE50:normal.customer@example.com", "used");
     await renderCheckout({ totalPrice: 200, customerType: "normal" });
 
+    // First, enter email
+    const emailInput = document.querySelector('input[type="email"]') as HTMLInputElement;
+    await user.type(emailInput, "normal.customer@example.com");
+    
+    // Then apply coupon
     await user.type(screen.getByPlaceholderText("SAVE50"), "SAVE50");
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
-    expect(
-      screen.getByText("SAVE50 has already been used for this user."),
-    ).toBeInTheDocument();
+    // Wait for the error message to appear
+    await waitFor(() => {
+      expect(
+        screen.getByText("SAVE50 has already been used for this user."),
+      ).toBeInTheDocument();
+    });
     expect(screen.queryByText("Coupon SAVE50")).not.toBeInTheDocument();
   });
 

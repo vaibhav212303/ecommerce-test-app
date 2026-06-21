@@ -1,0 +1,47 @@
+I am working on a Next.js e-commerce application called TESTRIG-E-SHOP.
+
+## Project Context
+- Framework: Next.js (App Router, TypeScript)
+- Test Framework: Vitest + React Testing Library
+- State: React Context API (CartProvider, CustomerProvider)
+- Key utility: getConversionRate(from: string, to: string): Promise<number> 
+  located at @/lib/currencyRate
+
+## Feature Being Tested
+The CurrencyConversion component inside src/app/checkout/page.tsx:
+- Fetches a live USD conversion rate on mount using getConversionRate()
+- Displays the cart total converted to the selected currency (EUR, GBP, JPY, USD)
+- Shows "Fetching rate..." while loading
+- Shows "Failed to fetch currency rate" in red if the fetch fails
+- When USD is selected, no API call is made — shows USD total directly
+- When currency dropdown changes, a new rate is fetched immediately
+- When cart total changes (e.g. coupon applied), converted amount updates
+
+## Acceptance Criteria from PRD
+1. Converted EUR total is displayed on page load
+2. Switching currency from EUR to GBP fetches a new rate and updates display
+3. Selecting USD shows the USD total without making an API call
+4. "Fetching rate..." is shown while fetch is in progress
+5. Error message shown in red if fetch fails
+6. Converted amount updates when SAVE50 coupon is applied and total changes
+
+## Existing Test Pattern to Follow
+- Uses vi.hoisted() for mock variables (NOT top-level vi.fn())
+- Mocks @/lib/currencyRate and next/navigation
+- Sets localStorage cart before rendering
+- Wraps component in <CustomerProvider><CartProvider>
+- Uses await act(async () => { render(...) }) for async rendering
+- Uses screen.findByText() for async assertions
+
+## Your Task
+Write a complete Vitest test file named:
+  src/app/checkout/CurrencyConversion.gemini.test.tsx
+
+Requirements:
+- Cover all 6 acceptance criteria above
+- Each test must have a clear description matching the acceptance criteria
+- Use userEvent for dropdown interaction
+- Mock getConversionRate to return controlled rate values
+- Assert the final converted amount visible on screen
+- Do not test rate staleness, session expiry, or re-validation at payment time
+  (these are explicitly out of scope per PRD v1.0)

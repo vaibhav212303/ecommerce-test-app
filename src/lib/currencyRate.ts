@@ -6,7 +6,7 @@ let cachedRates: Record<string, { rate: number; timestamp: number }> = {};
 export async function getConversionRate(from: string, to: string): Promise<number> {
   const key = `${from}_${to}`;
   const now = Date.now();
-  if (cachedRates[key] && now - cachedRates[key].timestamp < 60_000) {
+  if (cachedRates[key] && now - cachedRates[key].timestamp < 20_000) {
     return cachedRates[key].rate;
   }
   // Always call our API proxy, which handles local/remote automatically

@@ -147,7 +147,7 @@ export default function CheckoutPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
         <div className="mt-8 flex items-center justify-center">
@@ -194,8 +194,8 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
+        <div className="lg:col-span-7">
           {step === "shipping" && (
             <form
               onSubmit={handleNext}
@@ -401,7 +401,7 @@ export default function CheckoutPage() {
           )}
         </div>
 
-        <div className="rounded-lg bg-white p-6 shadow-sm h-fit">
+        <div className="lg:col-span-5 rounded-lg bg-white p-6 shadow-sm h-fit">
           <h2 className="mb-4 font-semibold text-gray-900">Your Order</h2>
           <div className="space-y-4">
             {items.map((item) => (
@@ -502,7 +502,7 @@ export default function CheckoutPage() {
                 </p>
               ) : (
                 <p className="rounded-md bg-gray-50 p-2 text-xs text-gray-600">
-                  Free shipping above $1,000.
+                  $50 shipping applies below $1,000.
                 </p>
               )}
               <div className="flex justify-between border-t pt-3 text-lg font-bold text-gray-900">

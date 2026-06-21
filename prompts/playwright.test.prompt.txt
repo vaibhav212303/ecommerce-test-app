@@ -1,0 +1,49 @@
+I am working on a Next.js e-commerce application called TESTRIG-E-SHOP
+running locally at http://localhost:3000.
+
+## Project Context
+- Framework: Next.js (App Router, TypeScript)
+- E2E Test Framework: Playwright
+- Test directory: playwright/tests/
+- Page Objects: playwright/support/pageObjects/
+- Page Object Manager: playwright/support/PageObjectManager.ts
+- Config: playwright/playwright.config.ts
+
+## Feature Being Tested
+The CurrencyConversion component on the checkout page (/checkout):
+- A dropdown allows switching between EUR, GBP, JPY, USD
+- On page load, EUR is selected by default and a converted total is displayed
+- Switching currency updates the displayed converted amount
+- While fetching, "Fetching rate..." is shown
+- If fetch fails, "Failed to fetch currency rate" is shown in red
+- Selecting USD shows the USD total with no API call
+
+## Acceptance Criteria from PRD
+1. Checkout page loads and shows EUR conversion by default
+2. Switching to GBP updates the displayed converted amount
+3. Switching to USD shows the raw USD total
+4. Loading state "Fetching rate..." is visible during fetch
+5. Full checkout flow completes: shipping → payment → summary → place order
+
+## Existing Test Pattern to Follow
+- Tests live in playwright/tests/
+- Page objects live in playwright/support/pageObjects/
+- Uses PageObjectManager to access page objects
+- Browser: Chromium
+- Uses page.goto(), page.locator(), expect(locator).toBeVisible()
+- Uses page.selectOption() for dropdowns
+- Cart state is set via localStorage before navigation
+
+## Your Task
+Write a complete Playwright test file named:
+  playwright/tests/currencyConversion.spec.ts
+
+Requirements:
+- Cover all 5 acceptance criteria above
+- Set up cart in localStorage before navigating to /checkout
+- Use page.selectOption() to change the currency dropdown
+- Assert the converted amount updates correctly
+- Test the full happy-path checkout flow
+- Do NOT test: rate changes mid-session, staleness warnings,
+  concurrent requests, or re-validation before payment
+  (explicitly out of scope per PRD v1.0)

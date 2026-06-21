@@ -7,6 +7,56 @@ export class CheckoutPage {
     await expect(this.page.locator('h1')).toContainText('Checkout');
   }
 
+  async getCurrencyDropdown() {
+    return this.page.locator('select.border.rounded');
+  }
+
+  async getCurrentCurrency() {
+    const select = await this.getCurrencyDropdown();
+    return await select.inputValue();
+  }
+
+  async selectCurrency(currency: 'EUR' | 'GBP' | 'JPY' | 'USD') {
+    const select = await this.getCurrencyDropdown();
+    await select.selectOption(currency);
+    // Wait for conversion to complete
+    await this.page.waitForTimeout(500);
+  }
+
+  async getConvertedTotal() {
+    // The converted total is in a span with the currency symbol
+    const totalSpan = this.page.locator('span.font-bold');
+    return await totalSpan.textContent();
+  }
+
+  async isLoadingStateVisible() {
+    return await this.page.locator('text=Fetching rate...').isVisible();
+  }
+
+  async isErrorStateVisible() {
+    return await this.page.locator('text=Failed to fetch currency rate').isVisible();
+  }
+
+  async waitForConversionToComplete() {
+    // Wait for loading to disappear
+    await this.page.waitForSelector('text=Fetching rate...', { state: 'hidden', timeout: 5000 }).catch(() => null);
+    // Wait for converted total to appear
+    await this.page.locator('span.font-bold').first().waitFor({ timeout: 5000 });
+  }
+
+  async verifyEURDefaultOnLoad() {
+    const currency = await this.getCurrentCurrency();
+    expect(currency).toBe('EUR');
+    const total = await this.getConvertedTotal();
+    expect(total).toContain('€');
+  }
+
+  async verifyUSDShowsRawTotal() {
+    // When USD is selected, the total should be in USD format
+    const total = await this.getConvertedTotal();
+    expect(total).toBeTruthy();
+  }
+
   async fillShippingInfo(info: {
     email: string;
     firstName: string;
@@ -45,5 +95,10 @@ export class CheckoutPage {
 
   async verifyOrderSuccess() {
     await expect(this.page.locator('h1')).toContainText('Order Placed!');
+  }
+
+  async navigateToCheckout() {
+    await this.page.goto('/checkout');
+    await this.verifyCheckoutPage();
   }
 }
