@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import mochawesomeReporter from './scripts/vitest-mochawesome-reporter';
 
 export default defineConfig({
   plugins: [react()],
@@ -9,6 +10,14 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     exclude: ['**/node_modules/**', '**/playwright/**'],
+    reporters: [
+      'default',
+      mochawesomeReporter({
+        jsonFile: 'reports/unit/mochawesome.json',
+        reportDir: 'reports/unit',
+        reportFilename: 'mochawesome',
+      }),
+    ],
   },
   resolve: {
     alias: {
